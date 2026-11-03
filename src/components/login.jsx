@@ -10,19 +10,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BeatLoader } from "react-spinners";
 import Error from "./error";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import { login } from "@/db/apiAuth";
 import useFetch from "@/hooks/use-fetch";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { UrlState } from "@/context";
 
 const Login = () => {
 
-  const [error, setError] = useState([]);
+  const [error, setError] = useState(/** @type {Record<string, string>} */ ({}));
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const longLink = searchParams.get("createNew");
 
   const handleInputtChange = (e) => {
     const { name, value } = e.target;
@@ -32,10 +38,17 @@ const Login = () => {
     }));
   };
 
-  const { err, loading, fn: fnLogin } = useFetch(login);
+  const { data, err, loading, fn: fnLogin } = useFetch(login, formData);
+  const {fetchUser} = UrlState();
+  useEffect(() => {
+    if (data && !err) {
+      navigate(`/dashboard${longLink ? `?createNew=${encodeURIComponent(longLink)}` : ""}`);
+      fetchUser();
+    }
+  }, [data, err, longLink, navigate]);
 
   const handleLogin = async () => {
-    setError([]);
+    setError({});
     try{
       const schema = Yup.object().shape({
         email: Yup.string().email("Invalid email address").required("Email is required"),
@@ -47,11 +60,12 @@ const Login = () => {
 
     }catch(e){
       if (!e?.inner) return;
+      /** @type {Record<string, string>} */
       const newErrors = {};
-      e?.inner?.forEach((err) => {
-        newErrors[err.path] = err.message;
+      e.inner.forEach((/** @type {{ path: string, message: string }} */ validationIssue) => {
+        newErrors[validationIssue.path] = validationIssue.message;
       });
-      setError(newErrors); 
+      setError(newErrors);
     }
   }
 
