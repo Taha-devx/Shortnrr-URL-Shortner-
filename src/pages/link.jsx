@@ -99,7 +99,7 @@ const LinkPage = () => {
           </span>
 
           <a
-            href={`https://shortnrr.com/${link}`}
+            href={shortUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-3xl sm:text-4xl text-blue-400 font-bold hover:underline cursor-pointer"

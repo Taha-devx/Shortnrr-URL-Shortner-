@@ -1,3 +1,4 @@
+
 import { UAParser } from "ua-parser-js";
 import supabase from "./supabase";
 
@@ -7,45 +8,62 @@ export async function getClicksForUrls(urlIds) {
     .select("*")
     .in("url_id", urlIds);
 
-        if (error) {
-            console.error(error.message);
-            throw new Error("Unable to load CLicks")
-        };
-
+  if (error) {
+    console.error(error.message);
+    throw new Error("Unable to load clicks");
+  }
 
   return data;
 }
 
-const parser = new UAParser();
-
-export async function storeClicks({ id, originalUrl: original_url }){
+export async function storeClicks({ id }) {
   try {
-    const res = parser.getResult();
-    const device = res.type || "desktop";
+    const parser = new UAParser();
+    const result = parser.getResult();
+
+    const device =
+      result.device.type === "mobile"
+        ? "Mobile"
+        : result.device.type === "tablet"
+          ? "Tablet"
+          : "Desktop";
 
     let city = null;
     let country = null;
+
+    // Give the location service a maximum of 900 ms.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 900);
+
     try {
-      const response = await fetch("https://ipapi.co/json");
+      const response = await fetch("https://ipapi.co/json/", {
+        signal: controller.signal,
+      });
+
       if (response.ok) {
         const location = await response.json();
         city = location.city || null;
         country = location.country_name || null;
       }
     } catch (error) {
-      console.warn("Unable to load redirect location:", error);
+      console.warn("Location lookup failed:", error.message);
+    } finally {
+      clearTimeout(timeout);
     }
 
-    await supabase.from("clicks").insert({
+    // Insert the click with its location.
+    const { error } = await supabase.from("clicks").insert({
       url_id: id,
       city,
       country,
       device,
     });
+
+    if (error) {
+      console.error("Click recording failed:", error.message);
+    }
   } catch (error) {
     console.error("Error recording clicks:", error);
-  } finally {
-    if (original_url) window.location.href = original_url;
   }
 }
 
@@ -53,11 +71,12 @@ export async function getClicksForUrl(url_id) {
   const { data, error } = await supabase
     .from("clicks")
     .select("*")
-    .eq("url_id",url_id)
+    .eq("url_id", url_id);
 
   if (error) {
     console.error(error.message);
-    throw new Error("Uable to load Stats");
+    throw new Error("Unable to load stats");
   }
+
   return data;
 }

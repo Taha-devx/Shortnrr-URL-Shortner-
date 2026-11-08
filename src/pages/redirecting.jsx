@@ -1,44 +1,61 @@
-import { getLongUrl } from "@/db/apiUrls";
-import useFetch from "@/hooks/use-fetch";
-import React from "react";
+
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { BarLoader } from "react-spinners";
-import { useEffect } from "react";
+import useFetch from "@/hooks/use-fetch";
+import { getLongUrl } from "@/db/apiUrls";
 import { storeClicks } from "@/db/apiClicks";
+
 const RedirectPage = () => {
   const { id } = useParams();
-  const { loading, data, fn } = useFetch(getLongUrl, id);
+  const redirected = useRef(false);
 
-  const { loading: loadingStats, fn: fnStats } = useFetch(storeClicks, {
-    id: data?.id,
-    originalUrl: data?.original_url,
-  });
-
-  useEffect(() => {
-    fn(id);
-  }, [fn, id]);
+  const {
+    loading,
+    data,
+    fn,
+    err: error,
+  } = useFetch(getLongUrl);
 
   useEffect(() => {
-    if (!loading && data) {
-      fnStats({
-        id: data.id,
-        originalUrl: data.original_url,
-      });
+    if (id) {
+      fn(id);
     }
-  }, [loading, data, fnStats]);
+  }, [id]);
 
-  if(loading || loadingStats){
-    return(
+  useEffect(() => {
+    if (!data?.original_url || redirected.current) return;
+
+    redirected.current = true;
+
+    const redirect = async () => {
+      try {
+        await storeClicks({ id: data.id });
+      } catch (error) {
+        console.error("Analytics error:", error);
+      } finally {
+        window.location.replace(data.original_url);
+      }
+    };
+
+    redirect();
+  }, [data]);
+
+  if (loading) {
+    return (
       <>
-        <BarLoader width={"100%"} color="#36d7d7"/>
-        <br/>
+        <BarLoader width="100%" color="#36d7d7" />
+        <br />
         Redirecting...
       </>
-    )
+    );
   }
 
-  
-  return null
+  if (error) {
+    return <p>Short link not found or unavailable.</p>;
+  }
+
+  return <p>Redirecting...</p>;
 };
 
 export default RedirectPage;
