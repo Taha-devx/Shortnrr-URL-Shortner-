@@ -7,12 +7,7 @@ import useFetch from "@/hooks/use-fetch";
 import { BarLoader, BeatLoader } from "react-spinners";
 import { LinkIcon, Copy, Download, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LocationStats from "@/components/location-stats";
 import DeviceStats from "@/components/device-stats";
 
@@ -81,8 +76,10 @@ const LinkPage = () => {
     fnDelete(url.id);
   };
 
+  const shortUrl = `${window.location.origin}/${link}`;
+
   const copyLink = () => {
-    navigator.clipboard.writeText(`https://shortnrr.com/${link}`);
+    navigator.clipboard.writeText(shortUrl);
   };
 
   if (loading || loadingStats) {
@@ -107,7 +104,7 @@ const LinkPage = () => {
             rel="noopener noreferrer"
             className="text-3xl sm:text-4xl text-blue-400 font-bold hover:underline cursor-pointer"
           >
-            https://shortnrr.com/{link}
+            {shortUrl}
           </a>
 
           <a
@@ -152,34 +149,48 @@ const LinkPage = () => {
           />
         </div>
 
-        <Card className="min-w-0 w-full">
-          <CardHeader>
-            <CardTitle className="text-4xl font-extrabold">Card Title</CardTitle>
-          </CardHeader>
-          {stats && stats?.length ? (
-            <CardContent className="flex flex-col gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Total Clicks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{stats?.length}</p>
-                </CardContent>
-              </Card>
+       
+<Card className="min-w-0 w-full">
+  <CardHeader>
+    <CardTitle className="text-2xl font-extrabold">
+      Link Analytics
+    </CardTitle>
+  </CardHeader>
 
-              <CardTitle>Location Information</CardTitle>
-              <LocationStats stats={stats || []}/>
-              <CardTitle>Device Information</CardTitle>
-              <DeviceStats stats={stats || []}/>
-            </CardContent>
-          ) : (
-            <CardContent>
-              {loadingStats === false
-                ? "No Statistics yet"
-                : "Loading Statistics .. "}
-            </CardContent>
-          )}
+  <CardContent className="space-y-8">
+    {stats?.length > 0 ? (
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Clicks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.length}</p>
+          </CardContent>
         </Card>
+
+        <div>
+          <h3 className="font-semibold mb-4">
+            Location Information
+          </h3>
+          <LocationStats stats={stats} />
+        </div>
+
+        <div>
+          <h3 className="font-semibold mb-4">
+            Device Information
+          </h3>
+          <DeviceStats stats={stats} />
+        </div>
+      </>
+    ) : (
+      <p className="text-muted-foreground">
+        No statistics yet. Share your link to start tracking clicks.
+      </p>
+    )}
+  </CardContent>
+</Card>
+
       </div>
     </>
   );

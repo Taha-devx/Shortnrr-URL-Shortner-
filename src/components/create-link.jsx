@@ -1,4 +1,3 @@
-
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UrlState } from "@/context";
 import {
@@ -30,9 +29,7 @@ const CreateLink = () => {
   const longLink = searchParams.get("createNew");
 
   const [errors, setErrors] = useState({});
-  const [shortUrl] = useState(() =>
-    Math.random().toString(36).substring(2, 6)
-  );
+  const [shortUrl] = useState(() => Math.random().toString(36).substring(2, 6));
 
   const [formValues, setFormValues] = useState({
     title: "",
@@ -56,12 +53,7 @@ const CreateLink = () => {
     }));
   };
 
-  const {
-    loading,
-    data,
-    err: error,
-    fn: fnCreateurl,
-  } = useFetch(createUrl);
+  const { loading, data, err: error, fn: fnCreateurl } = useFetch(createUrl);
 
   useEffect(() => {
     if (data?.[0]?.id) {
@@ -86,17 +78,14 @@ const CreateLink = () => {
       }
 
       const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png")
+        canvas.toBlob(resolve, "image/png"),
       );
 
       if (!blob) {
         throw new Error("Failed to generate QR code");
       }
 
-      await fnCreateurl(
-        { ...formValues, shortUrl, user_id: user.id },
-        blob
-      );
+      await fnCreateurl({ ...formValues, shortUrl, user_id: user.id }, blob);
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         const newErrors = {};
@@ -120,23 +109,17 @@ const CreateLink = () => {
       }}
     >
       <DialogTrigger
-        render={
-          <Button variant="destructive">
-            Create New Links
-          </Button>
-        }
+        render={<Button variant="destructive">Create New Links</Button>}
       />
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-bold text-2xl">
-            Create New
-          </DialogTitle>
+          <DialogTitle className="font-bold text-2xl">Create New</DialogTitle>
         </DialogHeader>
 
         {formValues.longUrl && (
           <QRCode
-            value={`https://shortnrr.com/${formValues.customUrl.trim() || shortUrl}`}
+            value={`${window.location.origin}/${formValues.customUrl.trim() || shortUrl}`}
             size={250}
             ref={ref}
           />
@@ -162,11 +145,9 @@ const CreateLink = () => {
 
         <div className="flex items-center gap-2">
           <Card className="shrink-0 whitespace-nowrap p-2">
-            Shortnrr.com
+            {window.location.host}
           </Card>
-
           /
-
           <Input
             id="customUrl"
             placeholder="Custom Link (optional)"
@@ -183,11 +164,7 @@ const CreateLink = () => {
             onClick={createNewLink}
             variant="destructive"
           >
-            {loading ? (
-              <BeatLoader size={10} color="white" />
-            ) : (
-              "Create"
-            )}
+            {loading ? <BeatLoader size={10} color="white" /> : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
