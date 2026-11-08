@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 const useFetch = (cb) => {
   const [loading, setLoading] = useState(false);
   const [err, setError] = useState(null);
   const [data, setData] = useState(null);
 
-    const fn = async (...args) => {
+    const fn = useCallback(async (...args) => {
         setLoading(true);
         setError(null);
         setData(null);
@@ -18,9 +18,9 @@ const useFetch = (cb) => {
         } finally {
             setLoading(false);
         }
-    }
+    }, [cb])
 
     return { data, err, loading, fn };
 }
 
-export default useFetch
+export default useFetch;

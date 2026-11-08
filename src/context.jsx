@@ -1,27 +1,47 @@
-import { Feather } from "lucide-react";
-import { Children, createContext, useContext, useEffect } from "react";
+
+import { createContext, useContext, useEffect, useState } from "react";
 import useFetch from "./hooks/use-fetch";
 import { getCurrentUser } from "./db/apiAuth";
 
-const UrlContext = createContext()
+const UrlContext = createContext(null);
 
-const UrlProvider = ({children}) => {
+const UrlProvider = ({ children }) => {
+  const { data: user, fn: fetchUser } = useFetch(getCurrentUser);
 
-    const {data:user,loading,fn:fetchUser} = useFetch(getCurrentUser);
+  // Wait until Supabase finishes checking the session
+  const [loading, setLoading] = useState(true);
 
-    const isAuthenticated = user?.role === "authenticated";
-    
-    useEffect(() => {
-        fetchUser();
-    }, []);
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        await fetchUser();
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return <UrlContext.Provider value={{user, fetchUser, loading, isAuthenticated}}>
-        {children}
+    initializeAuth();
+  }, []);
+
+  const isAuthenticated = Boolean(user?.id);
+
+  return (
+    <UrlContext.Provider
+      value={{ user, fetchUser, loading, isAuthenticated }}
+    >
+      {children}
     </UrlContext.Provider>
-}
-
-export const UrlState = () => {
-    return useContext(UrlContext);
+  );
 };
 
-export default UrlProvider
+export const UrlState = () => {
+  const context = useContext(UrlContext);
+
+  if (!context) {
+    throw new Error("UrlState must be used inside UrlProvider");
+  }
+
+  return context;
+};
+
+export default UrlProvider;
